@@ -1,9 +1,9 @@
 // Libraries
-#include <Wire.h>               // Nao lembro
-#include <LiquidCrystal_I2C.h>  // Tela 16,2
+#include <Wire.h>               // 16,2 LCD Screen
+#include <LiquidCrystal_I2C.h>  // 16,2 LCD Screen
 #include <SevSeg.h>             // 4 Digit 7 Segment Display (4D7SDisplay)
-///////////////// INICIO DA DECLARACAO DA PARTE DE MUSICA /////////////////
-// Define cada nota para um frequencia em hertz
+///////////////// BEGIN OF MUSIC PART DECLARATION /////////////////
+// Define each note to a frequence in hertz
 #define NOTE_B0 31
 #define NOTE_C1 33
 #define NOTE_CS1 35
@@ -212,24 +212,25 @@ int notes = sizeof(melody) / sizeof(melody[0]) / 2;
 int wholenote = (60000 * 4) / tempo;
 
 int divider = 0, noteDuration = 0;
-///////////////// FIM DA DECLARACAO DA PARTE DE MUSICA /////////////////
+///////////////// END OF MUSIC PART DECLARATION /////////////////
 
-///////////////// INICIO DA DECLARACAO DA PARTE DO LEDs /////////////////
+///////////////// BEGIN OF LEDs PART DECLARATION /////////////////
 byte numDigits = 4;
 byte digitPins[] = { 2, 3, 4, 5 };
 byte segmentPins[] = { 6, 7, 8, 9, 10, 11, 12, 13 };
 bool resistorsOnSegments = 0;
-///////////////// FIM DA DECLARACAO DA PARTE DO LEDs /////////////////
+///////////////// END OF LEDs PART DECLARATION /////////////////
 
-///////////////// INICIO DA DECLARACAO DA PARTE DO LCD /////////////////
-// Seta o adress da LCD para 0x3F para 16 chars e 2 linhas do display
+///////////////// BEGIN OF LCD PART DECLARATION /////////////////
+// Set LCD address to 0x3F for 16 chars and 2 display lines
+// 
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
-// Declaracao dos characteres especiais que vao ser usados na LCD
+// Declaration of special characters that will be used on the LCD
 byte swordDown[8] = {
   0b00100,
   0b00100,
   0b11111,
-  0b01110,   // Faz o character de uma espada!
+  0b01110,  // Make a Sword pointed down!
   0b01110,
   0b01110,
   0b01110,
@@ -239,7 +240,7 @@ byte swordUp[8] = {
   0b00100,
   0b01110,
   0b01110,
-  0b01110,
+  0b01110, // Make a Sword pointed up!
   0b01110,
   0b11111,
   0b00100,
@@ -249,7 +250,7 @@ byte heart[8] = {
   0b00000,
   0b01010,
   0b11111,
-  0b11111,   // Faz o character de um coracao!
+  0b11111,  // Make a Heart!
   0b01110,
   0b00100,
   0b00000,
@@ -257,131 +258,140 @@ byte heart[8] = {
 };
 ///////////////// FIM DA DECLARACAO DA PARTE DO LCD /////////////////
 
-// Definindo as variaveis
-  // Botoes
-int numberButtons = 6;   // Numero total de botoes
-int startPin = 22;       // Onde comeca a porta dos botoes
-int buttons[6];          // Lista com todos os botoes
-boolean buttonsBool[6];  // Bool pra checar o estado do botao
-  // Buzzer
-const int miniSom = 28;  // Pin do MiniSom
-  // Jogo
-int pressNumber = 0;  // Numero total de vezes que vao ser apertadas no jogo
-int gameBegin = 0; // Variavel de vericacao para saber quando mudar para a tela de Setup (So faz algo quando estiver em 1)
-int inGame = 0; // Variavel de vericacao para saber quando mudar para a tela de Jogo (So faz algo quando estiver em 2)
+// Defining the variables
+// Buttons
+int numberButtons = 6;   // Total number of buttons
+int startPin = 22;       // Start of buttons pin number
+int buttons[6];          // List with all buttons
+boolean buttonsBool[6];  // Bool to check button state
+// Buzzer
+const int miniSom = 28;  // miniSom Pin number
+// Game varibles
+int pressNumber = 0;  // Total number of times that the player will have to press in game
+int gameState = 1; // Varible that defines the state of where the game is
 
 void setup() {
   Serial.begin(9600);
-  // Inicilizando todos os botoes em seus respectivos pins
+  // Initializing all buttons in their respectives pins
   for (int i = 0; i < numberButtons; i++)
     buttons[i] = i + startPin;
-  // Setando todos os botoes para o estado de falso
+  // Setting all buttons to "false" state
   for (int i = 0; i < numberButtons; i++)
     buttonsBool[i] = false;
-  // Setando todos os botoes para o estado de input pullup
+  // Setting all buttons to "input_pullup" state
   for (int i = 0; i < numberButtons; i++)
     pinMode(buttons[i], INPUT_PULLUP);
-  // Setando o buzzer para o estado de output
+  // Setting buzzer to "output" state
   pinMode(miniSom, OUTPUT);
-  //Inicializando um objeto controller do 4D7SDisplay
+  // Initializing a controller object to 4D7SDisplay
   SevSeg sevseg;
-  // Setando as variaveis do 4D7SDisplay
+  // Setting varibles of 4D7SDisplay 
   sevseg.begin(COMMON_CATHODE, numDigits, digitPins, segmentPins, resistorsOnSegments);
   sevseg.setBrightness(90);
-  // inicializando o lcd
+  // Initializing LCD Display
   lcd.init();
-  // Liga a luz de fundo e limpa a tela com o clear
+  // Turns backlight on and clears the screen
   lcd.backlight();
   lcd.clear();
-  // Inicializando os characteres especiais
-  lcd.createChar(1, heart);
-  lcd.createChar(2, swordDown);
-  lcd.createChar(3, swordUp);
+  // Initializing special characters
+  lcd.createChar(10, heart);
+  lcd.createChar(20, swordDown);
+  lcd.createChar(30, swordUp);
 
-  //Music();
   GameMenu();
 }
 
 void loop() {
-  ButtonPressing();
   GameManager();
-
+  ButtonPressing();
 }
 
 void ButtonPressing() {
   for (int i = 0; i < numberButtons; i++) {
     if (!buttonsBool[i]) {
       if (digitalRead(buttons[i]) == LOW) {
-        if (i == 0) { // Adicionador +1
+        if (i == 0) {  // Adds +1 to the total number of times to be pressed --> Green Button
           pressNumber++;
           lcd.clear();
           lcd.print(pressNumber);
           buttonsBool[i] = true;
-        } else if (i == 1) { // Adicionador +10
+        } else if (i == 1) {  // Adds +10 to the total number of times to be pressed --> Yellow Button
           pressNumber += 10;
           lcd.clear();
           lcd.print(pressNumber);
           buttonsBool[i] = true;
-        } else if (i == 2) { // Botao Green para ?? coisas
+        } else if (i == 2) {  // Erase the total number of times to be pressed and clears the screen --> Red Button
           lcd.clear();
           pressNumber = 0;
-        } else if (i == 3) { // Botao Blue para confirmar
-          gameBegin++;
-          inGame++;
-          buttonsBool[i] = true;
-        } else if (i == 4) {
+        } else if (i == 3) {  // Confirm and goes to next game screen --> Blue Button
+          gameState += 1;
+          buttonsBool[i] == true;
+        } else if (i == 4) {  // Player 1 button --> Arcade button Blue
           lcd.clear();
           lcd.print("Player 1 funcionando!");
           buttonsBool[i] = true;
-        } else if (i == 5) {
+        } else if (i == 5) {  // Player 2 button --> Arcade button Red
           lcd.clear();
           lcd.print("Player 2 funcionando!");
           buttonsBool[i] = true;
         }
-      }
-    } else {
-      if (digitalRead(buttons[i]) == HIGH) {
-        buttonsBool[i] = false;
+      } else {
+        if (digitalRead(buttons[i]) == HIGH) {
+          buttonsBool[i] = false;
+        }
       }
     }
   }
   delay(15);
 }
-
-void GameMenu(){
+void GameMenu() {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Jarvis Play Mode");
-  lcd.setCursor(0,1);
-  lcd.write(3);
-  lcd.setCursor(1,1);
-  lcd.write(2);
-  lcd.setCursor(2,1);
-  lcd.write(3);
-  lcd.setCursor(3,1);
-  lcd.print("Press Blue");
-  lcd.write(3);
-  lcd.write(2);
-  lcd.write(3);
-}
-void GameSetup(){
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("How many points?");
   lcd.setCursor(0, 1);
-  lcd.print("G = +1 / Y = +10");
+  lcd.write(30);
+  lcd.setCursor(1, 1);
+  lcd.write(20);
+  lcd.setCursor(2, 1);
+  lcd.write(30);
+  lcd.setCursor(3, 1);
+  lcd.print("Press Blue");
+  lcd.write(30);
+  lcd.write(20);
+  lcd.write(30);
 }
-void GameManager(){
-  if(gameBegin == 0 || inGame == 2){
+void GameSetup() {
+  lcd.clear();
+  lcd.print("How many points?");
+}
+void GameStart() {
+  lcd.clear();
+  lcd.print("Did something...");
+}
+void GameManager() {
+  switch (gameState){
+    case 1: // Menu Screen
+      StopAllButtons();
+      break;
+    case 2: // Setup Screen
+      GameSetup();
+      break;
+    case 3:
+      StopButtons();
+      GameStart();
+      break;
+  }
+}
+void StopAllButtons(){ // Stops all buttons, exept the confirm (Blue button)
     buttonsBool[0] = true;
     buttonsBool[1] = true;
     buttonsBool[2] = true;
     buttonsBool[4] = true;
     buttonsBool[5] = true;
-  }
-  if(gameBegin == 1){
-    GameSetup();
-  } else if(gameBegin > 1 && inGame == 2){
-    Music();
-  }
+}
+void StopButtons(){ // Stops all buttons, exept players (Arcades) and confirm (Blue) until game ends
+    buttonsBool[0] = true;
+    buttonsBool[1] = true;
+    buttonsBool[2] = true;
+    //buttonsBool[3] = true; // Only come back when the game ends
 }
