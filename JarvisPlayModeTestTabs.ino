@@ -223,7 +223,7 @@ bool resistorsOnSegments = 0;
 
 ///////////////// BEGIN OF LCD PART DECLARATION /////////////////
 // Set LCD address to 0x3F for 16 chars and 2 display lines
-// 
+//
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
 // Declaration of special characters that will be used on the LCD
 byte swordDown[8] = {
@@ -240,7 +240,7 @@ byte swordUp[8] = {
   0b00100,
   0b01110,
   0b01110,
-  0b01110, // Make a Sword pointed up!
+  0b01110,  // Make a Sword pointed up!
   0b01110,
   0b11111,
   0b00100,
@@ -256,7 +256,7 @@ byte heart[8] = {
   0b00000,
   0b00000
 };
-///////////////// FIM DA DECLARACAO DA PARTE DO LCD /////////////////
+///////////////// END OF LCD PART DECLARATION /////////////////
 
 // Defining the variables
 // Buttons
@@ -268,7 +268,29 @@ boolean buttonsBool[6];  // Bool to check button state
 const int miniSom = 28;  // miniSom Pin number
 // Game varibles
 int pressNumber = 0;  // Total number of times that the player will have to press in game
-int gameState = 1; // Varible that defines the state of where the game is
+int gameState = 1;    // Varible that defines the state of where the game is
+int countDown;
+// Player Varibles
+char playerOne;
+char playerOneUnit;
+char playerTwo;
+char playerTwoUnit;
+int checkPlayerOne;
+int checkPlayerOneUnit;
+int checkPlayerTwo;
+int checkPlayerTwoUnit;
+int playerOnePress;
+int playerTwoPress;
+// State varibles
+bool countDownState = true; // Count Down Clear
+bool state = true; // First Screen Clear
+bool state1 = true; // Second Screen Clear
+// Millis varibles
+unsigned long previousMillis = 0;
+unsigned long currentMillis;
+const long interval = 150;
+// Initializing a controller object to 4D7SDisplay
+SevSeg sevseg;
 
 void setup() {
   Serial.begin(9600);
@@ -283,9 +305,7 @@ void setup() {
     pinMode(buttons[i], INPUT_PULLUP);
   // Setting buzzer to "output" state
   pinMode(miniSom, OUTPUT);
-  // Initializing a controller object to 4D7SDisplay
-  SevSeg sevseg;
-  // Setting varibles of 4D7SDisplay 
+  // Setting varibles of 4D7SDisplay
   sevseg.begin(COMMON_CATHODE, numDigits, digitPins, segmentPins, resistorsOnSegments);
   sevseg.setBrightness(90);
   // Initializing LCD Display
@@ -294,104 +314,252 @@ void setup() {
   lcd.backlight();
   lcd.clear();
   // Initializing special characters
-  lcd.createChar(10, heart);
-  lcd.createChar(20, swordDown);
-  lcd.createChar(30, swordUp);
+  lcd.createChar(5, heart);
+  lcd.createChar(6, swordDown);
+  lcd.createChar(7, swordUp);
 
+  //Music();
   GameMenu();
 }
 
 void loop() {
+  currentMillis = millis();
   GameManager();
   ButtonPressing();
+  DisplayPlayerOne();
 }
 
 void ButtonPressing() {
-  for (int i = 0; i < numberButtons; i++) {
-    if (!buttonsBool[i]) {
-      if (digitalRead(buttons[i]) == LOW) {
-        if (i == 0) {  // Adds +1 to the total number of times to be pressed --> Green Button
-          pressNumber++;
-          lcd.clear();
-          lcd.print(pressNumber);
-          buttonsBool[i] = true;
-        } else if (i == 1) {  // Adds +10 to the total number of times to be pressed --> Yellow Button
-          pressNumber += 10;
-          lcd.clear();
-          lcd.print(pressNumber);
-          buttonsBool[i] = true;
-        } else if (i == 2) {  // Erase the total number of times to be pressed and clears the screen --> Red Button
-          lcd.clear();
-          pressNumber = 0;
-        } else if (i == 3) {  // Confirm and goes to next game screen --> Blue Button
-          gameState += 1;
-          buttonsBool[i] == true;
-        } else if (i == 4) {  // Player 1 button --> Arcade button Blue
-          lcd.clear();
-          lcd.print("Player 1 funcionando!");
-          buttonsBool[i] = true;
-        } else if (i == 5) {  // Player 2 button --> Arcade button Red
-          lcd.clear();
-          lcd.print("Player 2 funcionando!");
-          buttonsBool[i] = true;
-        }
-      } else {
-        if (digitalRead(buttons[i]) == HIGH) {
-          buttonsBool[i] = false;
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    for (int i = 0; i < numberButtons; i++) {
+      if (!buttonsBool[i]) {
+        if (digitalRead(buttons[i]) == LOW) {
+          if (i == 0) {  // Adds +1 to the total number of times to be pressed --> Green Button
+            buttonsBool[i] = true;
+            pressNumber++;
+            lcd.clear();
+            lcd.print(pressNumber);
+          } else if (i == 1) {  // Adds +10 to the total number of times to be pressed --> Yellow Button
+            buttonsBool[i] = true;
+            pressNumber += 10;
+            lcd.clear();
+            lcd.print(pressNumber);
+          } else if (i == 2) {  // Erase the total number of times to be pressed and clears the screen --> Red Button
+            buttonsBool[i] = true;
+            lcd.clear();
+            pressNumber = 0;
+          } else if (i == 3) {  // Confirm and goes to next game screen --> Blue Button
+            buttonsBool[i] == true;
+            gameState++;
+          } else if (i == 4) {  // Player 1 button --> Arcade button Blue
+            buttonsBool[i] = true;
+            playerOnePress--;
+          } else if (i == 5) {  // Player 2 button --> Arcade button Red
+            buttonsBool[i] = true;
+            playerTwoPress--;
+          }
+        } else {
+          if (digitalRead(buttons[i]) == HIGH) {
+            buttonsBool[i] = false;
+          }
         }
       }
     }
   }
-  delay(15);
 }
+
+void GameManager() {
+  switch (gameState) {
+    case 1:  // Menu Screen
+      StopAllButtons();
+      break;
+    case 2:  // Setup Screen
+      GameSetup();
+      break;
+    case 3:  // In Game
+      GameStart();
+      DisplayPlayerOne();
+      break;
+    case 4:  // End Screen
+      lcd.print("End Screen");
+  }
+}
+
 void GameMenu() {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Jarvis Play Mode");
   lcd.setCursor(0, 1);
-  lcd.write(30);
+  lcd.write(7);
   lcd.setCursor(1, 1);
-  lcd.write(20);
+  lcd.write(6);
   lcd.setCursor(2, 1);
-  lcd.write(30);
+  lcd.write(7);
   lcd.setCursor(3, 1);
   lcd.print("Press Blue");
-  lcd.write(30);
-  lcd.write(20);
-  lcd.write(30);
+  lcd.write(7);
+  lcd.write(6);
+  lcd.write(7);
 }
+
 void GameSetup() {
-  lcd.clear();
+  PlayAllSetupButtons();  // Set the state of setup buttons back to false (functional)
+  ClearScreenOnce();      // Clear the screen one time
+  lcd.setCursor(0, 0);    // Set cursor to the start of LCD
   lcd.print("How many points?");
+  lcd.setCursor(0, 1);     // Set cursor to the start of second roll of LCD
+  lcd.print(pressNumber);  // Print the pressNumber varible (number of times to be pressed in game)
 }
+
 void GameStart() {
-  lcd.clear();
-  lcd.print("Did something...");
+  CountDown();
+  StopButtons();
+  ClearScreenOnceAgain();
+  lcd.setCursor(0, 0);
+  lcd.write(7);
+  lcd.setCursor(1, 0);
+  lcd.write(6);
+  lcd.setCursor(2, 0);
+  lcd.write(7);
+  lcd.setCursor(3, 0);
+  lcd.write(6);
+  lcd.setCursor(4, 0);
+  lcd.write(7);
+  lcd.setCursor(5, 0);
+  lcd.print("BATTLE");
+  lcd.setCursor(11, 0);
+  lcd.write(7);
+  lcd.setCursor(12, 0);
+  lcd.write(6);
+  lcd.setCursor(13, 0);
+  lcd.write(7);
+  lcd.setCursor(14, 0);
+  lcd.write(6);
+  lcd.setCursor(15, 0);
+  lcd.write(7);
 }
-void GameManager() {
-  switch (gameState){
-    case 1: // Menu Screen
-      StopAllButtons();
-      break;
-    case 2: // Setup Screen
-      GameSetup();
-      break;
-    case 3:
-      StopButtons();
-      GameStart();
-      break;
+
+void StopAllButtons() {  // Stops all buttons, exept the confirm (Blue button)
+  buttonsBool[0] = true;
+  buttonsBool[1] = true;
+  buttonsBool[2] = true;
+  buttonsBool[4] = true;
+  buttonsBool[5] = true;
+}
+
+void StopButtons() {  // Stops setup buttons and turn on Arcade Buttons
+  buttonsBool[1] = true;
+  buttonsBool[2] = true;
+  buttonsBool[4] = false;
+  buttonsBool[5] = false;
+  //buttonsBool[3] = true; // Only come back when the game ends
+}
+
+void PlayAllSetupButtons() {  // Turn on all setup buttons
+  buttonsBool[0] = false;
+  buttonsBool[1] = false;
+  buttonsBool[2] = false;
+}
+
+void ClearScreenOnce() {
+  if (state) {
+    lcd.clear();
+    state = false;
   }
 }
-void StopAllButtons(){ // Stops all buttons, exept the confirm (Blue button)
-    buttonsBool[0] = true;
-    buttonsBool[1] = true;
-    buttonsBool[2] = true;
-    buttonsBool[4] = true;
-    buttonsBool[5] = true;
+
+void ClearScreenOnceAgain() {
+  if (state1) {
+    lcd.clear();
+    state1 = false;
+  }
 }
-void StopButtons(){ // Stops all buttons, exept players (Arcades) and confirm (Blue) until game ends
-    buttonsBool[0] = true;
-    buttonsBool[1] = true;
-    buttonsBool[2] = true;
-    //buttonsBool[3] = true; // Only come back when the game ends
+
+void CountDown() {
+  if (countDownState) {
+    for (countDown = 3; countDown > 0; countDown--){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print(countDown);
+      delay(1000);
+    }
+    countDownState = false;
+  }
+}
+
+void DisplayPlayerOne() {
+  playerOnePress = pressNumber;
+  while(playerOnePress != 0) {
+    if(playerOnePress / 10 > 0) {
+      checkPlayerOne = playerOnePress / 10;
+      if(checkPlayerOne == 1) {
+        playerOne = (0b00000110);
+        sevseg.setSegmentsDigit(0, playerOne);
+      } else if (checkPlayerOne == 2) {
+        playerOne = (0b01011011);
+        sevseg.setSegmentsDigit(0, playerOne);
+      }else if (checkPlayerOne == 3) {
+        playerOne = (0b01001111);
+        sevseg.setSegmentsDigit(0, playerOne);
+      }else if (checkPlayerOne == 4) {
+        playerOne = (0b01100110);
+        sevseg.setSegmentsDigit(0, playerOne);
+      }else if (checkPlayerOne == 5) {
+        playerOne = (0b01101101);
+        sevseg.setSegmentsDigit(0, playerOne);
+      }else if (checkPlayerOne == 6) {
+        playerOne = (0b01111101);
+        sevseg.setSegmentsDigit(0, playerOne);
+      }else if (checkPlayerOne == 7) {
+        playerOne = (0b00000111);
+        sevseg.setSegmentsDigit(0, playerOne);
+      }else if (checkPlayerOne == 8) {
+        playerOne = (0b01111111);
+        sevseg.setSegmentsDigit(0, playerOne);
+      }else if (checkPlayerOne == 9) {
+        playerOne = (0b01101111);
+        sevseg.setSegmentsDigit(0, playerOne);
+      }
+    }
+    if(playerOnePress % 10 >= 0) {
+      checkPlayerOneUnit = playerOnePress % 10;
+      if(checkPlayerOneUnit == 0) {
+        playerOneUnit = (0b00111111);
+        sevseg.setSegmentsDigit(1, playerOneUnit);
+      } else if(checkPlayerOneUnit == 1) {
+        playerOneUnit = (0b00000110);
+        sevseg.setSegmentsDigit(1, playerOneUnit);
+      } else if (checkPlayerOneUnit == 2) {
+        playerOneUnit = (0b01011011);
+        sevseg.setSegmentsDigit(1, playerOneUnit);
+      }else if (checkPlayerOneUnit == 3) {
+        playerOneUnit = (0b01001111);
+        sevseg.setSegmentsDigit(1, playerOneUnit);
+      }else if (checkPlayerOneUnit == 4) {
+        playerOneUnit = (0b01100110);
+        sevseg.setSegmentsDigit(1, playerOneUnit);
+      }else if (checkPlayerOneUnit == 5) {
+        playerOneUnit = (0b01101101);
+        sevseg.setSegmentsDigit(1, playerOneUnit);
+      }else if (checkPlayerOneUnit == 6) {
+        playerOneUnit = (0b01111101);
+        sevseg.setSegmentsDigit(1, playerOneUnit);
+      }else if (checkPlayerOneUnit == 7) {
+        playerOneUnit = (0b00000111);
+        sevseg.setSegmentsDigit(1, playerOneUnit);
+      }else if (checkPlayerOneUnit == 8) {
+        playerOneUnit = (0b01111111);
+        sevseg.setSegmentsDigit(1, playerOneUnit);
+      }else if (checkPlayerOneUnit == 9) {
+        playerOneUnit = (0b01101111);
+        sevseg.setSegmentsDigit(1, playerOneUnit);
+      }
+    }
+    sevseg.refreshDisplay();
+  }
+}
+
+void DisplayPlayerTwo() {
+  // Here is where the player two code
 }
