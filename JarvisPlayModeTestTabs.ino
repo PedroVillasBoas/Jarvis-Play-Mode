@@ -283,14 +283,19 @@ int checkPlayerTwo;
 int checkPlayerTwoUnit;
 int playerOnePress;
 int playerTwoPress;
+bool playerOneWon = false;
+bool playerTwoWon = false;
 // State varibles
 bool countDownState = true;  // Count Down Clear
 bool state = true;           // First Screen Clear
 bool state1 = true;          // Second Screen Clear
+bool state2 = true;          // First gameState add to only add once
+bool state3 = true;          // Third and final Screen Clear
+bool hasPrinted = false;     // To be sure that it'll only print once
 // Millis varibles
 unsigned long previousMillis = 0;
 unsigned long currentMillis;
-const long interval = 150;
+const long interval = 100;  // 150 is standard
 // Initializing a controller object to 4D7SDisplay
 SevSeg sevseg;
 
@@ -328,8 +333,6 @@ void loop() {
   currentMillis = millis();
   GameManager();
   ButtonPressing();
-  //DisplayPlayerOne();
-  //DisplayPlayerTwo();
   DisplayPlayersPresses();
 }
 
@@ -385,7 +388,11 @@ void GameManager() {
       GameStart();
       break;
     case 4:  // End Screen
-      lcd.print("End Screen");
+      if (playerOneWon) {
+        PlayerOneEndScreen();
+      } else if (playerTwoWon) {
+        PlayerTwoEndScreen();
+      }
   }
 }
 
@@ -420,28 +427,31 @@ void GameStart() {
   StopButtons();
   ClearScreenOnceAgain();
   canStartGame = true;  // Set the 4D7SDisplay to display the remaining number of presses for player one
-  lcd.setCursor(0, 0);
-  lcd.write(7);
-  lcd.setCursor(1, 0);
-  lcd.write(6);
-  lcd.setCursor(2, 0);
-  lcd.write(7);
-  lcd.setCursor(3, 0);
-  lcd.write(6);
-  lcd.setCursor(4, 0);
-  lcd.write(7);
-  lcd.setCursor(5, 0);
-  lcd.print("BATTLE");
-  lcd.setCursor(11, 0);
-  lcd.write(7);
-  lcd.setCursor(12, 0);
-  lcd.write(6);
-  lcd.setCursor(13, 0);
-  lcd.write(7);
-  lcd.setCursor(14, 0);
-  lcd.write(6);
-  lcd.setCursor(15, 0);
-  lcd.write(7);
+  if (hasPrinted == false) {
+    lcd.setCursor(0, 0);
+    lcd.write(7);
+    lcd.setCursor(1, 0);
+    lcd.write(6);
+    lcd.setCursor(2, 0);
+    lcd.write(7);
+    lcd.setCursor(3, 0);
+    lcd.write(6);
+    lcd.setCursor(4, 0);
+    lcd.write(7);
+    lcd.setCursor(5, 0);
+    lcd.print("BATTLE");
+    lcd.setCursor(11, 0);
+    lcd.write(7);
+    lcd.setCursor(12, 0);
+    lcd.write(6);
+    lcd.setCursor(13, 0);
+    lcd.write(7);
+    lcd.setCursor(14, 0);
+    lcd.write(6);
+    lcd.setCursor(15, 0);
+    lcd.write(7);
+    hasPrinted = true;
+  }
 }
 
 void StopAllButtons() {  // Stops all buttons, exept the confirm (Blue button)
@@ -457,7 +467,6 @@ void StopButtons() {  // Stops setup buttons and turn on Arcade Buttons
   buttonsBool[2] = true;
   buttonsBool[4] = false;
   buttonsBool[5] = false;
-  //buttonsBool[3] = true; // Only come back when the game ends
 }
 
 void PlayAllSetupButtons() {  // Turn on all setup buttons
@@ -477,6 +486,20 @@ void ClearScreenOnceAgain() {  // Clear the screen
   if (state1) {
     lcd.clear();
     state1 = false;
+  }
+}
+
+void ClearScreenOnceAgainAgain() {  // Clear the screen
+  if (state3) {
+    lcd.clear();
+    state3 = false;
+  }
+}
+
+void AddOneToGameStateOnce() {
+  if (state2) {
+    gameState++;
+    state2 = false;
   }
 }
 
@@ -500,8 +523,8 @@ void DisplayPlayersPresses() {
       canGetNumberPress = false;  // Set it to false so it doesn't get the number of presses again
     }
   }
-  while (playerOnePress != 0 || playerTwoPress != 0) {  // Check to see if there's any presses remaining
-    if (playerOnePress / 10 > 0) {                      // Get the tens number if there's one
+  if (playerOnePress != 0 || playerTwoPress != 0) {  // Check to see if there's any presses remaining
+    if (playerOnePress / 10 > 0) {                   // Get the tens number if there's one
       checkPlayerOne = playerOnePress / 10;
       if (checkPlayerOne == 1) {  // All ifs and else ifs sets the playerOne char varible to a bit code to show at the display
         playerOne = (0b00000110);
@@ -571,7 +594,7 @@ void DisplayPlayersPresses() {
     }
     if (playerTwoPress / 10 > 0) {  // Get the tens number if there's one
       checkPlayerTwo = playerTwoPress / 10;
-      if (checkPlayerTwo == 1) {  // All ifs and else ifs sets the playerOne char varible to a bit code to show at the display
+      if (checkPlayerTwo == 1) {  // All ifs and else ifs sets the playerTwo char varible to a bit code to show at the display
         playerTwo = (0b00000110);
         sevseg.setSegmentsDigit(2, playerTwo);  // Display the number on the first digit of the display, in this case the number 1 on digit 3
       } else if (checkPlayerTwo == 2) {
@@ -605,7 +628,7 @@ void DisplayPlayersPresses() {
     }
     if (playerTwoPress % 10 >= 0) {              // Gets the unid number of the total number of presses
       checkPlayerTwoUnit = playerTwoPress % 10;  // Set the unid number
-      if (checkPlayerTwoUnit == 0) {             // All ifs and else ifs sets the playerOneUnit char varible to a bit code to show at the display
+      if (checkPlayerTwoUnit == 0) {             // All ifs and else ifs sets the playerTwoUnit char varible to a bit code to show at the display
         playerTwoUnit = (0b00111111);
         sevseg.setSegmentsDigit(3, playerTwoUnit);  // Display the number on the second digit of the display, in this case the number 0 on digit 4
       } else if (checkPlayerTwoUnit == 1) {
@@ -637,6 +660,57 @@ void DisplayPlayersPresses() {
         sevseg.setSegmentsDigit(3, playerTwoUnit);
       }
     }
+    if (playerOnePress == 0) {
+      StopAllButtons();
+      playerOneWon = true;
+      AddOneToGameStateOnce();
+    } else if (playerTwoPress == 0) {
+      StopAllButtons();
+      playerTwoWon = true;
+      AddOneToGameStateOnce();
+    }
     sevseg.refreshDisplay();  // refresh the display
   }
+}
+
+void PlayerOneEndScreen() {  // End Screen for Player One
+  ClearScreenOnceAgainAgain();
+  lcd.setCursor(0, 0);
+  lcd.write(5);
+  lcd.setCursor(1, 0);
+  lcd.write(5);
+  lcd.setCursor(2, 0);
+  lcd.write(5);
+  lcd.setCursor(3, 0);
+  lcd.print("Player One");
+  lcd.setCursor(13, 0);
+  lcd.write(5);
+  lcd.setCursor(14, 0);
+  lcd.write(5);
+  lcd.setCursor(15, 0);
+  lcd.write(5);
+  lcd.setCursor(6, 1);
+  lcd.print("WON!");
+  Music();
+}
+
+void PlayerTwoEndScreen() {  // End Screen for Player Two
+  ClearScreenOnceAgainAgain();
+  lcd.setCursor(0, 0);
+  lcd.write(5);
+  lcd.setCursor(1, 0);
+  lcd.write(5);
+  lcd.setCursor(2, 0);
+  lcd.write(5);
+  lcd.setCursor(3, 0);
+  lcd.print("Player Two");
+  lcd.setCursor(13, 0);
+  lcd.write(5);
+  lcd.setCursor(14, 0);
+  lcd.write(5);
+  lcd.setCursor(15, 0);
+  lcd.write(5);
+  lcd.setCursor(6, 1);
+  lcd.print("WON!");
+  Music();
 }
