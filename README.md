@@ -38,5 +38,9 @@ Just some for fun project
   
   # The End Screen
   
-   The End Screen is not yet implemented. So... Wait for updates!  
+   The End Screen will show wich of the players *WON!*.  
+   On the first line of the LCD Display it'll say: "***Player One***" if the player one won or "***Player Two***" if the player two won and both of them will be surrounded by little *hearts*. (Nice way of putting some *puff* for the winning player, right?!)  
+   On the second line it'll just say "***WON!***".  
+   And (*Yeah, yeah... I know, THERE'S MORE!*) The Zelda's Lullaby song will play on the buzzer!  
+   And that's it! The game is complete.  
   
