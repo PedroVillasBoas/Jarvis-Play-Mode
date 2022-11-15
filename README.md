@@ -4,6 +4,18 @@ Just some for fun project
 # Description
   A quick overview of the project.
   
+  # What did I use to make this project?
+  
+  - 1 Buzzer;
+  - 4 Tactile Buttons;
+  - 2 Arcade Buttons;
+  - 1 4-Digit-7-Segment Display;
+  - 1 16,2 LCD Display;
+  - 4 1K Resistors;
+  - A lot of jumper wires;
+  - 1 Arduino Mega 2560;
+  - 1 Breadboard.
+  
   # What this project do?
 
   You and a friend can battle to see who among you can press a button faster!  
