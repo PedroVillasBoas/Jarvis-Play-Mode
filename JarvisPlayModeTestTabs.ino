@@ -265,26 +265,26 @@ int startPin = 22;       // Start of buttons pin number
 int buttons[6];          // List with all buttons
 boolean buttonsBool[6];  // Bool to check button state
 // Buzzer
-const int miniSom = 28;  // miniSom Pin number
+const int miniSom = 28;  // Buzzer Pin number
 // Game varibles
-int pressNumber = 0;  // Total number of times that the player will have to press in game
-int gameState = 1;    // Varible that defines the state of where the game is
-int countDown;
-bool canStartGame = false;  // Says when the 4D7SDisplay can display the players numbers
-bool canGetNumberPress = true;
+int pressNumber = 0;            // Total number of times that the player will have to press in game
+int gameState = 1;              // Varible that defines the state of where the game is
+int countDown;                  // Countdown number
+bool canStartGame = false;      // Says when the 4D7SDisplay can display the players numbers
+bool canGetNumberPress = true;  // Check to let the code know when the Players varibles can get the total number of presses
 // Player Varibles
-char playerOne;
-char playerOneUnit;
-char playerTwo;
-char playerTwoUnit;
-int checkPlayerOne;
-int checkPlayerOneUnit;
-int checkPlayerTwo;
-int checkPlayerTwoUnit;
-int playerOnePress;
-int playerTwoPress;
-bool playerOneWon = false;
-bool playerTwoWon = false;
+char playerOne;             // Set the byte number from the tens to show on the 4D7SDisplay from player one
+char playerOneUnit;         // Set the byte number from the unit to show on the 4D7SDisplay from player one
+char playerTwo;             // Set the byte number from the tens to show on the 4D7SDisplay from player two
+char playerTwoUnit;         // Set the byte number from the unit to show on the 4D7SDisplay from player two
+int checkPlayerOne;         // Checks to get the tens of the total number of presses from player one
+int checkPlayerOneUnit;     // Checks to get the unit of the total number of presses from player one
+int checkPlayerTwo;         // Checks to get the tens of the total number of presses from player two
+int checkPlayerTwoUnit;     // Checks to get the unit of the total number of presses from player two
+int playerOnePress;         // The remaining number of presses from player one
+int playerTwoPress;         // The remaining number of presses from player two
+bool playerOneWon = false;  // Check to see if player one won
+bool playerTwoWon = false;  // Check to see if player two won
 // State varibles
 bool countDownState = true;  // Count Down Clear
 bool state = true;           // First Screen Clear
@@ -292,10 +292,10 @@ bool state1 = true;          // Second Screen Clear
 bool state2 = true;          // First gameState add to only add once
 bool state3 = true;          // Third and final Screen Clear
 bool hasPrinted = false;     // To be sure that it'll only print once
-// Millis varibles
-unsigned long previousMillis = 0;
-unsigned long currentMillis;
-const long interval = 100;  // 150 is standard
+// Millis varibles (Avoid using Delay() function)
+unsigned long previousMillis = 0;  // Get the time when the last button was pressed
+unsigned long currentMillis;       // Get the total amount of time that has passed since the program started
+const long interval = 100;         // Interval from the last time the button was pressed (I found 100 to be the best for me)
 // Initializing a controller object to 4D7SDisplay
 SevSeg sevseg;
 
@@ -325,7 +325,6 @@ void setup() {
   lcd.createChar(6, swordDown);
   lcd.createChar(7, swordUp);
 
-  //Music();
   GameMenu();
 }
 
@@ -389,9 +388,9 @@ void GameManager() {
       break;
     case 4:  // End Screen
       if (playerOneWon) {
-        PlayerOneEndScreen();
+        PlayerOneEndScreen();  // Displays the Player One End Screen
       } else if (playerTwoWon) {
-        PlayerTwoEndScreen();
+        PlayerTwoEndScreen();  // Displays the Player Two End Screen
       }
   }
 }
@@ -511,7 +510,7 @@ void CountDown() {  // CountDown from 3
       lcd.print(countDown);
       delay(1000);
     }
-    countDownState = false;
+    countDownState = false;  // Stops de CountDown
   }
 }
 
