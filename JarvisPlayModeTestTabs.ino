@@ -488,14 +488,14 @@ void CountDown() {
   }
 }
 
-void DisplayPlayerOne() {
+void DisplayPlayerOne() { // Displays the number remaining of presses from the player one into the 4D7SDisplay
   playerOnePress = pressNumber;
-  while(playerOnePress != 0) {
-    if(playerOnePress / 10 > 0) {
+  while(playerOnePress != 0) { // Check to see if there's any pressed remaining
+    if(playerOnePress / 10 > 0) { // Get the tens number if there's one
       checkPlayerOne = playerOnePress / 10;
-      if(checkPlayerOne == 1) {
+      if(checkPlayerOne == 1) { // All ifs and else ifs sets the playerOne char varible to a bit code to show at the display
         playerOne = (0b00000110);
-        sevseg.setSegmentsDigit(0, playerOne);
+        sevseg.setSegmentsDigit(0, playerOne); // Display the number on the first digit of the display, in this case the number 1
       } else if (checkPlayerOne == 2) {
         playerOne = (0b01011011);
         sevseg.setSegmentsDigit(0, playerOne);
@@ -521,12 +521,15 @@ void DisplayPlayerOne() {
         playerOne = (0b01101111);
         sevseg.setSegmentsDigit(0, playerOne);
       }
+    } else { // If the number divided by 10 is less than 0, it doesn't have a tens anymore, so it should display 0
+      playerOne = (0b00111111);
+      sevseg.setSegmentsDigit(0, playerOne);
     }
-    if(playerOnePress % 10 >= 0) {
-      checkPlayerOneUnit = playerOnePress % 10;
-      if(checkPlayerOneUnit == 0) {
+    if(playerOnePress % 10 >= 0) { // Gets the unid number of the total number of presses
+      checkPlayerOneUnit = playerOnePress % 10; // Set the unid number
+      if(checkPlayerOneUnit == 0) { // All ifs and else ifs sets the playerOneUnit char varible to a bit code to show at the display
         playerOneUnit = (0b00111111);
-        sevseg.setSegmentsDigit(1, playerOneUnit);
+        sevseg.setSegmentsDigit(1, playerOneUnit); // Display the number on the second digit of the display, in this case the number 0
       } else if(checkPlayerOneUnit == 1) {
         playerOneUnit = (0b00000110);
         sevseg.setSegmentsDigit(1, playerOneUnit);
@@ -556,7 +559,7 @@ void DisplayPlayerOne() {
         sevseg.setSegmentsDigit(1, playerOneUnit);
       }
     }
-    sevseg.refreshDisplay();
+    sevseg.refreshDisplay(); // refresh the display
   }
 }
 
