@@ -270,6 +270,8 @@ const int miniSom = 28;  // miniSom Pin number
 int pressNumber = 0;  // Total number of times that the player will have to press in game
 int gameState = 1;    // Varible that defines the state of where the game is
 int countDown;
+bool canStartGame = false;  // Says when the 4D7SDisplay can display the players numbers
+bool canGetNumberPress = true;
 // Player Varibles
 char playerOne;
 char playerOneUnit;
@@ -282,9 +284,9 @@ int checkPlayerTwoUnit;
 int playerOnePress;
 int playerTwoPress;
 // State varibles
-bool countDownState = true; // Count Down Clear
-bool state = true; // First Screen Clear
-bool state1 = true; // Second Screen Clear
+bool countDownState = true;  // Count Down Clear
+bool state = true;           // First Screen Clear
+bool state1 = true;          // Second Screen Clear
 // Millis varibles
 unsigned long previousMillis = 0;
 unsigned long currentMillis;
@@ -326,7 +328,9 @@ void loop() {
   currentMillis = millis();
   GameManager();
   ButtonPressing();
-  DisplayPlayerOne();
+  //DisplayPlayerOne();
+  //DisplayPlayerTwo();
+  DisplayPlayersPresses();
 }
 
 void ButtonPressing() {
@@ -379,7 +383,6 @@ void GameManager() {
       break;
     case 3:  // In Game
       GameStart();
-      DisplayPlayerOne();
       break;
     case 4:  // End Screen
       lcd.print("End Screen");
@@ -416,6 +419,7 @@ void GameStart() {
   CountDown();
   StopButtons();
   ClearScreenOnceAgain();
+  canStartGame = true;  // Set the 4D7SDisplay to display the remaining number of presses for player one
   lcd.setCursor(0, 0);
   lcd.write(7);
   lcd.setCursor(1, 0);
@@ -462,23 +466,23 @@ void PlayAllSetupButtons() {  // Turn on all setup buttons
   buttonsBool[2] = false;
 }
 
-void ClearScreenOnce() {
+void ClearScreenOnce() {  // Clear the screen
   if (state) {
     lcd.clear();
     state = false;
   }
 }
 
-void ClearScreenOnceAgain() {
+void ClearScreenOnceAgain() {  // Clear the screen
   if (state1) {
     lcd.clear();
     state1 = false;
   }
 }
 
-void CountDown() {
+void CountDown() {  // CountDown from 3
   if (countDownState) {
-    for (countDown = 3; countDown > 0; countDown--){
+    for (countDown = 3; countDown > 0; countDown--) {
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print(countDown);
@@ -488,81 +492,151 @@ void CountDown() {
   }
 }
 
-void DisplayPlayerOne() { // Displays the number remaining of presses from the player one into the 4D7SDisplay
-  playerOnePress = pressNumber;
-  while(playerOnePress != 0) { // Check to see if there's any pressed remaining
-    if(playerOnePress / 10 > 0) { // Get the tens number if there's one
+void DisplayPlayersPresses() {
+  if (canStartGame) {         // Check to see if the 4D7SDisplay can display the remaining number of presses
+    if (canGetNumberPress) {  // To be sure it won't get the number every loop
+      playerOnePress = pressNumber;
+      playerTwoPress = pressNumber;
+      canGetNumberPress = false;  // Set it to false so it doesn't get the number of presses again
+    }
+  }
+  while (playerOnePress != 0 || playerTwoPress != 0) {  // Check to see if there's any presses remaining
+    if (playerOnePress / 10 > 0) {                      // Get the tens number if there's one
       checkPlayerOne = playerOnePress / 10;
-      if(checkPlayerOne == 1) { // All ifs and else ifs sets the playerOne char varible to a bit code to show at the display
+      if (checkPlayerOne == 1) {  // All ifs and else ifs sets the playerOne char varible to a bit code to show at the display
         playerOne = (0b00000110);
-        sevseg.setSegmentsDigit(0, playerOne); // Display the number on the first digit of the display, in this case the number 1
+        sevseg.setSegmentsDigit(0, playerOne);  // Display the number on the first digit of the display, in this case the number 1 on digit 1
       } else if (checkPlayerOne == 2) {
         playerOne = (0b01011011);
         sevseg.setSegmentsDigit(0, playerOne);
-      }else if (checkPlayerOne == 3) {
+      } else if (checkPlayerOne == 3) {
         playerOne = (0b01001111);
         sevseg.setSegmentsDigit(0, playerOne);
-      }else if (checkPlayerOne == 4) {
+      } else if (checkPlayerOne == 4) {
         playerOne = (0b01100110);
         sevseg.setSegmentsDigit(0, playerOne);
-      }else if (checkPlayerOne == 5) {
+      } else if (checkPlayerOne == 5) {
         playerOne = (0b01101101);
         sevseg.setSegmentsDigit(0, playerOne);
-      }else if (checkPlayerOne == 6) {
+      } else if (checkPlayerOne == 6) {
         playerOne = (0b01111101);
         sevseg.setSegmentsDigit(0, playerOne);
-      }else if (checkPlayerOne == 7) {
+      } else if (checkPlayerOne == 7) {
         playerOne = (0b00000111);
         sevseg.setSegmentsDigit(0, playerOne);
-      }else if (checkPlayerOne == 8) {
+      } else if (checkPlayerOne == 8) {
         playerOne = (0b01111111);
         sevseg.setSegmentsDigit(0, playerOne);
-      }else if (checkPlayerOne == 9) {
+      } else if (checkPlayerOne == 9) {
         playerOne = (0b01101111);
         sevseg.setSegmentsDigit(0, playerOne);
       }
-    } else { // If the number divided by 10 is less than 0, it doesn't have a tens anymore, so it should display 0
+    } else {  // If the number divided by 10 is less than 0, it doesn't have a tens anymore, so it should display 0
       playerOne = (0b00111111);
       sevseg.setSegmentsDigit(0, playerOne);
     }
-    if(playerOnePress % 10 >= 0) { // Gets the unid number of the total number of presses
-      checkPlayerOneUnit = playerOnePress % 10; // Set the unid number
-      if(checkPlayerOneUnit == 0) { // All ifs and else ifs sets the playerOneUnit char varible to a bit code to show at the display
+    if (playerOnePress % 10 >= 0) {              // Gets the unid number of the total number of presses
+      checkPlayerOneUnit = playerOnePress % 10;  // Set the unid number
+      if (checkPlayerOneUnit == 0) {             // All ifs and else ifs sets the playerOneUnit char varible to a bit code to show at the display
         playerOneUnit = (0b00111111);
-        sevseg.setSegmentsDigit(1, playerOneUnit); // Display the number on the second digit of the display, in this case the number 0
-      } else if(checkPlayerOneUnit == 1) {
+        sevseg.setSegmentsDigit(1, playerOneUnit);  // Display the number on the second digit of the display, in this case the number 0 on digit 2
+      } else if (checkPlayerOneUnit == 1) {
         playerOneUnit = (0b00000110);
         sevseg.setSegmentsDigit(1, playerOneUnit);
       } else if (checkPlayerOneUnit == 2) {
         playerOneUnit = (0b01011011);
         sevseg.setSegmentsDigit(1, playerOneUnit);
-      }else if (checkPlayerOneUnit == 3) {
+      } else if (checkPlayerOneUnit == 3) {
         playerOneUnit = (0b01001111);
         sevseg.setSegmentsDigit(1, playerOneUnit);
-      }else if (checkPlayerOneUnit == 4) {
+      } else if (checkPlayerOneUnit == 4) {
         playerOneUnit = (0b01100110);
         sevseg.setSegmentsDigit(1, playerOneUnit);
-      }else if (checkPlayerOneUnit == 5) {
+      } else if (checkPlayerOneUnit == 5) {
         playerOneUnit = (0b01101101);
         sevseg.setSegmentsDigit(1, playerOneUnit);
-      }else if (checkPlayerOneUnit == 6) {
+      } else if (checkPlayerOneUnit == 6) {
         playerOneUnit = (0b01111101);
         sevseg.setSegmentsDigit(1, playerOneUnit);
-      }else if (checkPlayerOneUnit == 7) {
+      } else if (checkPlayerOneUnit == 7) {
         playerOneUnit = (0b00000111);
         sevseg.setSegmentsDigit(1, playerOneUnit);
-      }else if (checkPlayerOneUnit == 8) {
+      } else if (checkPlayerOneUnit == 8) {
         playerOneUnit = (0b01111111);
         sevseg.setSegmentsDigit(1, playerOneUnit);
-      }else if (checkPlayerOneUnit == 9) {
+      } else if (checkPlayerOneUnit == 9) {
         playerOneUnit = (0b01101111);
         sevseg.setSegmentsDigit(1, playerOneUnit);
       }
     }
-    sevseg.refreshDisplay(); // refresh the display
+    if (playerTwoPress / 10 > 0) {  // Get the tens number if there's one
+      checkPlayerTwo = playerTwoPress / 10;
+      if (checkPlayerTwo == 1) {  // All ifs and else ifs sets the playerOne char varible to a bit code to show at the display
+        playerTwo = (0b00000110);
+        sevseg.setSegmentsDigit(2, playerTwo);  // Display the number on the first digit of the display, in this case the number 1 on digit 3
+      } else if (checkPlayerTwo == 2) {
+        playerTwo = (0b01011011);
+        sevseg.setSegmentsDigit(2, playerTwo);
+      } else if (checkPlayerTwo == 3) {
+        playerTwo = (0b01001111);
+        sevseg.setSegmentsDigit(2, playerTwo);
+      } else if (checkPlayerTwo == 4) {
+        playerTwo = (0b01100110);
+        sevseg.setSegmentsDigit(2, playerTwo);
+      } else if (checkPlayerTwo == 5) {
+        playerTwo = (0b01101101);
+        sevseg.setSegmentsDigit(2, playerTwo);
+      } else if (checkPlayerTwo == 6) {
+        playerTwo = (0b01111101);
+        sevseg.setSegmentsDigit(2, playerTwo);
+      } else if (checkPlayerTwo == 7) {
+        playerTwo = (0b00000111);
+        sevseg.setSegmentsDigit(2, playerTwo);
+      } else if (checkPlayerTwo == 8) {
+        playerTwo = (0b01111111);
+        sevseg.setSegmentsDigit(2, playerTwo);
+      } else if (checkPlayerTwo == 9) {
+        playerTwo = (0b01101111);
+        sevseg.setSegmentsDigit(2, playerTwo);
+      }
+    } else {  // If the number divided by 10 is less than 0, it doesn't have a tens anymore, so it should display 0
+      playerTwo = (0b00111111);
+      sevseg.setSegmentsDigit(2, playerTwo);
+    }
+    if (playerTwoPress % 10 >= 0) {              // Gets the unid number of the total number of presses
+      checkPlayerTwoUnit = playerTwoPress % 10;  // Set the unid number
+      if (checkPlayerTwoUnit == 0) {             // All ifs and else ifs sets the playerOneUnit char varible to a bit code to show at the display
+        playerTwoUnit = (0b00111111);
+        sevseg.setSegmentsDigit(3, playerTwoUnit);  // Display the number on the second digit of the display, in this case the number 0 on digit 4
+      } else if (checkPlayerTwoUnit == 1) {
+        playerTwoUnit = (0b00000110);
+        sevseg.setSegmentsDigit(3, playerTwoUnit);
+      } else if (checkPlayerTwoUnit == 2) {
+        playerTwoUnit = (0b01011011);
+        sevseg.setSegmentsDigit(3, playerTwoUnit);
+      } else if (checkPlayerTwoUnit == 3) {
+        playerTwoUnit = (0b01001111);
+        sevseg.setSegmentsDigit(3, playerTwoUnit);
+      } else if (checkPlayerTwoUnit == 4) {
+        playerTwoUnit = (0b01100110);
+        sevseg.setSegmentsDigit(3, playerTwoUnit);
+      } else if (checkPlayerTwoUnit == 5) {
+        playerTwoUnit = (0b01101101);
+        sevseg.setSegmentsDigit(3, playerTwoUnit);
+      } else if (checkPlayerTwoUnit == 6) {
+        playerTwoUnit = (0b01111101);
+        sevseg.setSegmentsDigit(3, playerTwoUnit);
+      } else if (checkPlayerTwoUnit == 7) {
+        playerTwoUnit = (0b00000111);
+        sevseg.setSegmentsDigit(3, playerTwoUnit);
+      } else if (checkPlayerTwoUnit == 8) {
+        playerTwoUnit = (0b01111111);
+        sevseg.setSegmentsDigit(3, playerTwoUnit);
+      } else if (checkPlayerTwoUnit == 9) {
+        playerTwoUnit = (0b01101111);
+        sevseg.setSegmentsDigit(3, playerTwoUnit);
+      }
+    }
+    sevseg.refreshDisplay();  // refresh the display
   }
-}
-
-void DisplayPlayerTwo() {
-  // Here is where the player two code
 }
